@@ -2,13 +2,13 @@
   "domain": "ab_gateway",
   "name": "AB Gateway",
   "config_flow": true,
-  "documentation": "https://github.com/home-assistant/example-custom-config/tree/master/custom_components/hello_world/",
+  "documentation": "https://github.com/AprilBrother/component-ab-gateway",
   "dependencies": ["mqtt", "bluetooth"],
   "requirements": [
       "janus>=1.0.0",
       "msgpack==1.0.4"
   ],
-  "codeowners": ["@volca"],
+  "codeowners": ["@AprilBrother"],
   "iot_class": "local_polling",
   "version": "0.2"
 }
