@@ -1,0 +1,17 @@
+{
+    "config": {
+        "step": {
+            "broker": {
+                "data": {
+                    "broker": "Broker",
+                    "discovery": "Enable discovery",
+                    "password": "Password",
+                    "port": "Port",
+                    "discovery_prefix": "The discovery prefix of the topic",
+                    "username": "Username"
+                },
+                "description": "Please enter the discovery prefix of the topic."
+            }
+        }
+    }
+}

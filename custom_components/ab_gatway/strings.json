@@ -1,0 +1,22 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Device is already configured",
+      "single_instance_allowed": "Already configured. Only a single configuration possible."
+    },
+    "step": {
+      "broker": {
+        "title": "AB BLE Gateway",
+        "description": "Please enter the discovery prefix of the topic.",
+        "data": {
+          "broker": "Broker",
+          "port": "Port",
+          "username": "Username",
+          "password": "Password",
+          "discovery_prefix": "The discovery prefix of the topic",
+          "mac": "MAC address of the gateway"
+        }
+      }
+    }
+  }
+}
