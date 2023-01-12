@@ -67,7 +67,7 @@ async def async_stop(hass) -> bool:
     return True
 
 
-class ABGatewayScanner(BaseHaScanner):
+class ABGatewayScanner(BaseHaRemoteScanner):
 
     def __init__(
         self,
