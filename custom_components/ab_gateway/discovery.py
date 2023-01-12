@@ -25,7 +25,7 @@ from homeassistant.components.mqtt import (
     CONF_TOPIC,
 )
 from homeassistant.components.bluetooth import (
-    BaseHaScanner,
+    BaseHaRemoteScanner,
     async_get_advertisement_callback,
     async_register_scanner,
 )
@@ -146,10 +146,6 @@ class ABGatewayScanner(BaseHaScanner):
                 await self.async_on_advertisement(data)
             except asyncio.TimeoutError:
                 pass
-
-    @property
-    def discovered_devices(self) -> list[BLEDevice]:
-        """Return a list of discovered devices."""
 
     async def async_on_advertisement(self, data) -> None:
         """Call the registered callback."""
