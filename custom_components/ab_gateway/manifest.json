@@ -3,7 +3,7 @@
   "name": "AB Gateway",
   "config_flow": true,
   "documentation": "https://github.com/AprilBrother/component-ab-gateway",
-  "dependencies": ["mqtt"],
+  "dependencies": ["mqtt", "bluetooth"],
   "requirements": [
       "janus>=1.0.0",
       "msgpack==1.0.4"
