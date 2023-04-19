@@ -106,7 +106,7 @@ class ABGatewayScanner(BaseHaRemoteScanner):
         async def async_process_discovery_data(data):
             """Process the data of a new discovery."""
             gateway_id = data.get('mac')
-            for dev in data.get('devices'):
+            for dev in data.get('devices', []):
                 if type(dev).__name__ == 'bytes':
                     queues.put("adv", {"gateway_id": gateway_id, "device": convert_dev_to_dict(dev)})
                 else:
