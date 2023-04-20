@@ -116,6 +116,7 @@ def parse_data(dev):
     device = BLEDevice(  # type: ignore[no-untyped-call]
         address=address,
         name=name,
+        details=None,
         rssi=rssi,  # deprecated, will be removed in newer bleak
     )
     _LOGGER.debug("parsed adv: %s device: %s service_uuids: %s", advertisement_data, device, advertisement_data.service_uuids)

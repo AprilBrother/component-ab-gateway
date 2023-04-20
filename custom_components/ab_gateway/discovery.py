@@ -82,6 +82,10 @@ class ABGatewayScanner(BaseHaRemoteScanner):
         self.source = scanner_id
         self._config = config
         self._queues: DiscoveryQueue = hass.data[DOMAIN]["queues"]
+        self._discovered_device_advertisement_datas: dict[
+            str, tuple[BLEDevice, AdvertisementData]
+        ] = {}
+        self._discovered_device_timestamps: dict[str, float] = {}
         self.name = DOMAIN
 
     async def async_run(self, hass):
@@ -102,7 +106,7 @@ class ABGatewayScanner(BaseHaRemoteScanner):
         async def async_process_discovery_data(data):
             """Process the data of a new discovery."""
             gateway_id = data.get('mac')
-            for dev in data.get('devices'):
+            for dev in data.get('devices', []):
                 if type(dev).__name__ == 'bytes':
                     queues.put("adv", {"gateway_id": gateway_id, "device": convert_dev_to_dict(dev)})
                 else:
@@ -149,9 +153,14 @@ class ABGatewayScanner(BaseHaRemoteScanner):
 
     async def async_on_advertisement(self, data) -> None:
         """Call the registered callback."""
-        device, advertisement_data = ble_parser.parse_data(data.get('device'))
-        self.source = f"{DOMAIN}_{data.get('gateway_id')}"
+        device, advertisement_data = ble_parser.parse_data(data.get("device"))
+        # self.source = f"{DOMAIN}_{data.get('gateway_id')}"
         now = time.monotonic()
+        self._discovered_device_advertisement_datas[device.address] = (
+            device,
+            advertisement_data,
+        )
+        self._discovered_device_timestamps[device.address] = now
         self._new_info_callback(
             BluetoothServiceInfoBleak(
                 name=advertisement_data.local_name or device.name or device.address,
@@ -160,7 +169,7 @@ class ABGatewayScanner(BaseHaRemoteScanner):
                 manufacturer_data=advertisement_data.manufacturer_data,
                 service_data=advertisement_data.service_data,
                 service_uuids=advertisement_data.service_uuids,
-                source=self.source,
+                source=f"{DOMAIN}_{data.get('gateway_id')}",
                 device=device,
                 advertisement=advertisement_data,
                 connectable=True,
