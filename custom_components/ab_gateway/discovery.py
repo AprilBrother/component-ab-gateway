@@ -25,13 +25,13 @@ from homeassistant.components.mqtt import (
     CONF_TOPIC,
 )
 from homeassistant.components.bluetooth import (
+    MONOTONIC_TIME,
     BaseHaRemoteScanner,
-    async_get_advertisement_callback,
     async_register_scanner,
 )
 from homeassistant.components.bluetooth.models import BluetoothServiceInfoBleak
 from homeassistant.helpers.event import async_track_time_interval
-from homeassistant.core import CALLBACK_TYPE, HomeAssistant, callback
+from homeassistant.core import CALLBACK_TYPE, HomeAssistant
 from .const import (
     DOMAIN,
     CONF_GATEWAY_ID,
@@ -45,7 +45,6 @@ DISCOVERY_UNSUBSCRIBE = "ab_gateway_discovery_unsubscribe"
 _LOGGER = logging.getLogger(__name__)
 
 async def async_start(hass, config, config_entry=None) -> bool:
-    new_info_callback = async_get_advertisement_callback(hass)
     assert config_entry.unique_id is not None
     source = str(config_entry.unique_id)
     _LOGGER.debug(
@@ -53,8 +52,8 @@ async def async_start(hass, config, config_entry=None) -> bool:
         source
     )
 
-    scanner = ABGatewayScanner(hass, source, config, new_info_callback)
-    config_entry.async_on_unload(async_register_scanner(hass, scanner, connectable=False))
+    scanner = ABGatewayScanner(hass, source, config, DOMAIN)
+    config_entry.async_on_unload(async_register_scanner(hass, scanner))
     hass.loop.create_task(scanner.async_run(hass))
     return True
 
@@ -69,25 +68,28 @@ async def async_stop(hass) -> bool:
 
 class ABGatewayScanner(BaseHaRemoteScanner):
 
+    __slots__ = ('_queues', '_config', '_hass')
+
     def __init__(
         self,
         hass: HomeAssistant,
         scanner_id: str,
         config,
-        new_info_callback: Callable[[BluetoothServiceInfoBleak], None],
+        name: str,
     ) -> None:
-        """Initialize the scanner."""
+        """Initialize the scanner, using the given update coordinator as data source."""
+        super().__init__(
+            scanner_id,
+            name,
+            connector=None,
+            connectable=False,
+        )
         self._hass = hass
-        self._new_info_callback = new_info_callback
-        self.source = scanner_id
+        self._queues = hass.data[DOMAIN]["queues"]
         self._config = config
-        self._queues: DiscoveryQueue = hass.data[DOMAIN]["queues"]
-        self.name = DOMAIN
 
     async def async_run(self, hass):
-
         queues = self._queues
-        callback = self._new_info_callback
 
         def convert_dev_to_dict(data):
             adpayload_start = 8
@@ -102,7 +104,7 @@ class ABGatewayScanner(BaseHaRemoteScanner):
         async def async_process_discovery_data(data):
             """Process the data of a new discovery."""
             gateway_id = data.get('mac')
-            for dev in data.get('devices'):
+            for dev in data.get('devices', []):
                 if type(dev).__name__ == 'bytes':
                     queues.put("adv", {"gateway_id": gateway_id, "device": convert_dev_to_dict(dev)})
                 else:
@@ -148,23 +150,20 @@ class ABGatewayScanner(BaseHaRemoteScanner):
                 pass
 
     async def async_on_advertisement(self, data) -> None:
-        """Call the registered callback."""
-        device, advertisement_data = ble_parser.parse_data(data.get('device'))
-        self.source = f"{DOMAIN}_{data.get('gateway_id')}"
-        now = time.monotonic()
-        self._new_info_callback(
-            BluetoothServiceInfoBleak(
-                name=advertisement_data.local_name or device.name or device.address,
-                address=device.address,
-                rssi=advertisement_data.rssi,
-                manufacturer_data=advertisement_data.manufacturer_data,
-                service_data=advertisement_data.service_data,
-                service_uuids=advertisement_data.service_uuids,
-                source=self.source,
-                device=device,
-                advertisement=advertisement_data,
-                connectable=True,
-                time=now,
-            )
+        device, advertisement_data = ble_parser.parse_data(data.get("device"))
+        self._discovered_device_advertisement_datas[device.address] = (
+            device,
+            advertisement_data,
+        )
+        self._async_on_advertisement(
+            device.address,
+            advertisement_data.rssi,
+            advertisement_data.local_name or device.name or device.address,
+            advertisement_data.service_uuids,
+            advertisement_data.service_data,
+            advertisement_data.manufacturer_data,
+            None,
+            {"address_type": 3},
+            MONOTONIC_TIME(),
         )
 
