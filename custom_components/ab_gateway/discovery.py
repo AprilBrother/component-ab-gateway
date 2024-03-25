@@ -151,10 +151,6 @@ class ABGatewayScanner(BaseHaRemoteScanner):
 
     async def async_on_advertisement(self, data) -> None:
         device, advertisement_data = ble_parser.parse_data(data.get("device"))
-        self._discovered_device_advertisement_datas[device.address] = (
-            device,
-            advertisement_data,
-        )
         self._async_on_advertisement(
             device.address,
             advertisement_data.rssi,
