@@ -3,7 +3,6 @@
 import logging
 import asyncio
 import voluptuous as vol
-import janus
 import json
 import copy
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
@@ -100,12 +99,12 @@ class DiscoveryQueue:
     def __init__(self):
         """Init."""
         self.dataqueue = {
-            "adv": janus.Queue(),
+            "adv": asyncio.Queue()
         }
 
     def put(self, queue, msg):
         """Put message to queue"""
-        self.dataqueue[queue].sync_q.put_nowait(msg)
+        return self.dataqueue[queue].put(msg)
 
     def get(self, queue):
         """Get queue"""
@@ -113,4 +112,4 @@ class DiscoveryQueue:
 
     def clean(self):
         """Clean queue"""
-        self.dataqueue["adv"].sync_q.put_nowait(None)
+        return self.dataqueue["adv"].put(None)

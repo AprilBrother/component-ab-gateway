@@ -106,11 +106,11 @@ class ABGatewayScanner(BaseHaRemoteScanner):
             gateway_id = data.get('mac')
             for dev in data.get('devices', []):
                 if type(dev).__name__ == 'bytes':
-                    queues.put("adv", {"gateway_id": gateway_id, "device": convert_dev_to_dict(dev)})
+                    await queues.put("adv", {"gateway_id": gateway_id, "device": convert_dev_to_dict(dev)})
                 else:
                     dev[INDEX_MAC] = dev[INDEX_MAC].lower()
                     dev[INDEX_ADV] = bytes.fromhex(dev[3])
-                    queues.put("adv", {"gateway_id": gateway_id, "device": dev})
+                    await queues.put("adv", {"gateway_id": gateway_id, "device": dev})
             return True
 
         async def async_message_received(msg):
@@ -141,10 +141,10 @@ class ABGatewayScanner(BaseHaRemoteScanner):
             )
         )
 
-        queue = self._queues.get('adv').async_q
+        queue = self._queues.get('adv')
         while True:
             try:
-                data = await asyncio.wait_for(queue.get(), 1)
+                data = await queue.get()
                 await self.async_on_advertisement(data)
             except asyncio.TimeoutError:
                 pass
